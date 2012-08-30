@@ -14,6 +14,10 @@ public class HealthMonitorApp {
 
 	public static void main(String[] args) throws SchedulerException, InterruptedException {
 		String repoEndpoint, authEndpoint, userName, password;
+		repoEndpoint = "https://repo-staging.sagebase.org/repo/v1";
+		authEndpoint = "https://auth-staging.sagebase.org/auth/v1";
+		userName = "x.schildwachter@sagebase.org";
+		password = "SBXS19642";
 		
 		SchedulerFactory factory = new org.quartz.impl.StdSchedulerFactory();
 		Scheduler scheduler = factory.getScheduler();
@@ -31,7 +35,7 @@ public class HealthMonitorApp {
 				.withIdentity("crudTrigger")
 				.startNow()
 				.withSchedule(simpleSchedule()
-				.withIntervalInSeconds(10)
+				.withIntervalInSeconds(60)
 				.repeatForever())
 				.build();
 		
