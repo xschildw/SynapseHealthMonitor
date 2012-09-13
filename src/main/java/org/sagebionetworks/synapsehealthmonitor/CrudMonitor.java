@@ -40,10 +40,12 @@ public class CrudMonitor implements Job {
 	private Synapse conn;
 	
 	public CrudMonitor() {
+		super();
 		conn = new SynapseConnectionBuilderImpl().createSynapseConnection();
 	}
 	
 	public CrudMonitor(Synapse conn) {
+		super();
 		this.conn = conn;
 	}
 //
@@ -74,7 +76,7 @@ public class CrudMonitor implements Job {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-		/**
+	/**
 	 *
 	 * @param ctxt
 	 * @throws JobExecutionException
@@ -88,18 +90,18 @@ public class CrudMonitor implements Job {
 		conn.setUserName(userName);
 
 		try {
-			generateCrud();
+//			generateCrud();
 			query();
-			uploadDownloadS3Data();
+			//uploadDownloadS3Data();
 		} catch (SynapseException e) {
 			throw new JobExecutionException("Encountered Synapse exception", e);
 		} catch (JSONException e) {
 			throw new JobExecutionException("Encountered JSON exception", e);
-		} catch (IOException e) {
+		}/* catch (IOException e) {
 			throw new JobExecutionException("Encountered IO exception", e);
 		} catch (HttpClientHelperException e) {
 			throw new JobExecutionException("Encountered IO exception", e);
-		}
+		}*/
 	}
 
 	/**

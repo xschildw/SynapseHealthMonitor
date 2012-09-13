@@ -10,25 +10,25 @@ public class SynapseConnectionBuilderImpl implements SynapseConnectionBuilder {
 	public SynapseConnectionBuilderImpl() {
 	}
 
-	@Override
+	
 	public SynapseConnectionBuilder withUserName(String userName) {
 		this.userName = userName;
 		return this;
 	}
 
-	@Override
+	
 	public SynapseConnectionBuilder withRepoEndpoint(String repoEndpoint) {
 		this.repoEndpoint = repoEndpoint;
 		return this;
 	}
 
-	@Override
+	
 	public SynapseConnectionBuilder withAuthEndpoint(String authEndpoint) {
 		this.authEndpoint = authEndpoint;
 		return this;
 	}
 
-	@Override
+	
 	public Synapse createSynapseConnection() {
 		Synapse conn = new Synapse();
 		if ((this.authEndpoint == null) || (this.repoEndpoint == null) || (this.userName == null)) {

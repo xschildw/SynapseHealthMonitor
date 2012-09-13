@@ -1,5 +1,6 @@
 package org.sagebionetworks.synapsehealthmonitor;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONException;
@@ -7,6 +8,13 @@ import org.json.JSONObject;
 import org.sagebionetworks.client.Synapse;
 import org.sagebionetworks.client.exceptions.SynapseException;
 import org.sagebionetworks.repo.model.Project;
+import org.sagebionetworks.repo.model.Annotations;
+import org.sagebionetworks.repo.model.Data;
+import org.sagebionetworks.repo.model.Folder;
+import org.sagebionetworks.repo.model.LayerTypeNames;
+import org.sagebionetworks.repo.model.LocationData;
+import org.sagebionetworks.repo.model.LocationTypeNames;
+import org.sagebionetworks.utils.HttpClientHelper;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -22,13 +30,7 @@ import org.mockito.Mockito;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import org.sagebionetworks.repo.model.Annotations;
-import org.sagebionetworks.repo.model.Data;
-import org.sagebionetworks.repo.model.Folder;
-import org.sagebionetworks.repo.model.LayerTypeNames;
-import org.sagebionetworks.repo.model.LocationData;
-import org.sagebionetworks.repo.model.LocationTypeNames;
-import org.sagebionetworks.utils.HttpClientHelper;
+import static org.mockito.Mockito.any;
 
 
 /**
@@ -139,5 +141,8 @@ public class CrudMonitorTest {
 		when(mockConn.createEntity(p)).thenReturn(expectedProj);
 		when(mockConn.createEntity(f)).thenReturn(expectedFolder);
 		when(mockConn.createEntity(d)).thenReturn(expectedData);
+		when(mockConn.uploadLocationableToSynapse(d, any(File.class))).thenReturn(d);
+		
+		
 	}
 }
