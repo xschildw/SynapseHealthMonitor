@@ -31,9 +31,6 @@ public class SynapseConnectionBuilderImpl implements SynapseConnectionBuilder {
 	
 	public Synapse createSynapseConnection() {
 		Synapse conn = new Synapse();
-		if ((this.authEndpoint == null) || (this.repoEndpoint == null) || (this.userName == null)) {
-			throw new IllegalArgumentException("Properties authEndpoint, repoEndpoint and userName cannot be null.");
-		}
 		conn.setAuthEndpoint(authEndpoint);
 		conn.setRepositoryEndpoint(repoEndpoint);
 		conn.setUserName(userName);
