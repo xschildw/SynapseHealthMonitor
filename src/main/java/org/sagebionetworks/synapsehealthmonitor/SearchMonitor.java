@@ -3,6 +3,7 @@ package org.sagebionetworks.synapsehealthmonitor;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.List;
+import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -26,6 +27,8 @@ public class SearchMonitor implements Job {
 	private String password;
 	private Synapse conn;
 	
+	private static Logger logger = Logger.getLogger(HealthMonitorApp.class);
+
 	public SearchMonitor() {
 		this.conn = new SynapseConnectionBuilderImpl().createSynapseConnection();
 	}
@@ -68,32 +71,41 @@ public class SearchMonitor implements Job {
 	 * @throws JobExecutionException
 	 */
 	public void execute(JobExecutionContext ctxt) throws JobExecutionException {
-		System.out.println("SearchMonitor executing...");
-//		JobKey key = ctxt.getJobDetail().getKey();
-//		JobDataMap dataMap = ctxt.getMergedJobDataMap();
-//		conn.setAuthEndpoint(authEndpoint);
-//		conn.setRepositoryEndpoint(repoEndpoint);
-//		conn.setUserName(userName);
-//
-//		try {
-//			search();
-//			//uploadDownloadS3Data();
-//		} catch (SynapseException e) {
-//			throw new JobExecutionException("Encountered Synapse exception", e);
-//		} catch (UnsupportedEncodingException e) {
-//			throw new JobExecutionException("Encountered UnsupportedEncoding exception", e);
-//		} catch (JSONObjectAdapterException e) {
-//			throw new JobExecutionException("Encountered JSONObjectAdapter exception", e);
-//		}
+		logger.debug("SearchMonitor executing...");
+		JobKey key = ctxt.getJobDetail().getKey();
+		JobDataMap dataMap = ctxt.getMergedJobDataMap();
+		conn.setAuthEndpoint(authEndpoint);
+		conn.setRepositoryEndpoint(repoEndpoint);
+		conn.setUserName(userName);
+
+		try {
+			logger.debug("Connecting to " + repoEndpoint + " with user " + userName);
+			conn.login(userName, password);
+			
+			search();
+		} catch (SynapseException e) {
+			logger.warn("SearchMonitor: Synapse exception");
+			throw new JobExecutionException("Encountered Synapse exception", e);
+		} catch (UnsupportedEncodingException e) {
+			logger.warn("SearchMonitor: UnsupportedEncoding exception");
+			throw new JobExecutionException("Encountered UnsupportedEncoding exception", e);
+		} catch (JSONObjectAdapterException e) {
+			logger.warn("SearchMonitor: JSONObjectAdapter exception");
+			throw new JobExecutionException("Encountered JSONObjectAdapter exception", e);
+		}
 	}
 	
+	/**
+	 *
+	 * @throws SynapseException
+	 * @throws UnsupportedEncodingException
+	 * @throws JSONObjectAdapterException
+	 */
 	public void search() throws SynapseException, UnsupportedEncodingException, JSONObjectAdapterException {
-		System.out.println("Connecting to " + repoEndpoint + " with user " + userName);
-		conn.login(userName, password);
-		System.out.println("\tSearching for cancer...");
+		logger.debug("\tSearching for liver...");
 		SearchQuery searchQuery = new SearchQuery();
 		List<String> queryTerms = new ArrayList<String>();
-		queryTerms.add("cancer");
+		queryTerms.add("liver");
 		searchQuery.setQueryTerm(queryTerms);
 		List<String> returnFields = new ArrayList<String>();
 		returnFields.add("id");
@@ -104,6 +116,7 @@ public class SearchMonitor implements Job {
 		SearchResults results = conn.search(searchQuery);
 		endTime = System.nanoTime();
 		elapsedTime = endTime - startTime;
-		System.out.println("\t\tFound " + results.getHits().size() + " hits in " + elapsedTime/1000 + " ms");
+		logger.debug("\t\tFound " + results.getFound() + " hits in " + elapsedTime/1000000 + " ms");
+		logger.info("SearchMonitor.search: " + elapsedTime/1000000);
 	}
 }

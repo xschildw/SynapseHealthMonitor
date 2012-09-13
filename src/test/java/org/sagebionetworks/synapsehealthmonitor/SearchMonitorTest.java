@@ -65,7 +65,7 @@ public class SearchMonitorTest {
 	public void testSearch() throws SynapseException, UnsupportedEncodingException, JSONObjectAdapterException{
 		SearchQuery q = new SearchQuery();
 		List<String> queryTerms = new ArrayList<String>();
-		queryTerms.add("cancer");
+		queryTerms.add("liver");
 		q.setQueryTerm(queryTerms);
 		List<String> returnFields = new ArrayList<String>();
 		returnFields.add("id");
@@ -81,6 +81,7 @@ public class SearchMonitorTest {
 		hit.setId("syn2");
 		hits.add(hit);
 		expectedRes.setHits(hits);
+		expectedRes.setFound(2L);
 		
 		when(mockConn.search(q)).thenReturn(expectedRes);
 		

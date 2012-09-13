@@ -4,6 +4,8 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
+import org.apache.log4j.Logger;
+import org.json.JSONArray;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -26,7 +28,7 @@ import org.sagebionetworks.utils.DefaultHttpClientSingleton;
 import org.sagebionetworks.utils.HttpClientHelper;
 import org.sagebionetworks.utils.HttpClientHelperException;
 
-		;
+
 
 /**
  *
@@ -38,7 +40,10 @@ public class CrudMonitor implements Job {
 	private String userName;
 	private String password;
 	private Synapse conn;
-	
+
+	private static Logger logger = Logger.getLogger(HealthMonitorApp.class);
+
+
 	public CrudMonitor() {
 		super();
 		conn = new SynapseConnectionBuilderImpl().createSynapseConnection();
@@ -82,7 +87,7 @@ public class CrudMonitor implements Job {
 	 * @throws JobExecutionException
 	 */
 	public void execute(JobExecutionContext ctxt) throws JobExecutionException {
-		System.out.println("CrudMonitor executing...");
+		logger.debug("CrudMonitor executing...");
 		JobKey key = ctxt.getJobDetail().getKey();
 		JobDataMap dataMap = ctxt.getMergedJobDataMap();
 		conn.setAuthEndpoint(authEndpoint);
@@ -90,46 +95,51 @@ public class CrudMonitor implements Job {
 		conn.setUserName(userName);
 
 		try {
-//			generateCrud();
+			logger.debug("Connecting to " + repoEndpoint + " with user " + userName);
+			conn.login(userName, password);
+
+			generateCrud();
 			query();
-			//uploadDownloadS3Data();
+			uploadDownloadS3Data();
 		} catch (SynapseException e) {
+			logger.warn("CrudMonitor: Synapse exception");
 			throw new JobExecutionException("Encountered Synapse exception", e);
 		} catch (JSONException e) {
+			logger.warn("CrudMonitor: JSON exception");
 			throw new JobExecutionException("Encountered JSON exception", e);
-		}/* catch (IOException e) {
+		} catch (IOException e) {
+			logger.warn("CrudMonitor: IO exception");
 			throw new JobExecutionException("Encountered IO exception", e);
 		} catch (HttpClientHelperException e) {
-			throw new JobExecutionException("Encountered IO exception", e);
-		}*/
+			logger.warn("CrudMonitor: HttpClientHelper exception");
+			throw new JobExecutionException("Encountered HttpClientHelper exception", e);
+		}
 	}
 
 	/**
 	 *
 	 * @throws SynapseException
 	 */
-	public void generateCrud() throws SynapseException {
-		System.out.println("Connecting to " + repoEndpoint + " with user " + userName);
-		conn.login(userName, password);
-		System.out.println("\tAdding project...");
+	public void generateCrud() throws SynapseException, JSONException {
+		logger.debug("\tAdding project...");
 		Project project = new Project();
-		project.setName("crudMonitorProject");
+//		project.setName("crudMonitorProject");
 		project = conn.createEntity(project);
-		System.out.println("\tAdding folder...");
+		logger.debug("\tAdding folder...");
 		Folder folder = new Folder();
-		folder.setName("crudMonitorFolder");
+//		folder.setName("crudMonitorFolder");
 		folder.setParentId(project.getId());
 		folder = conn.createEntity(folder);
-		System.out.println("\tAdding data...");
+		logger.debug("\tAdding data...");
 		Data data = new Data();
-		data.setName("crudMonitorData");
+//		data.setName("crudMonitorData");
 		data.setParentId(folder.getId());
 		data = conn.createEntity(data);
-		System.out.println("\tAdding annotations...");
+		logger.debug("\tAdding annotations...");
 		Annotations annots = conn.getAnnotations(data.getId());
 		annots.addAnnotation("someCrudAnnot", "someCrudAnnotValue");
 		Annotations updatedAnnots = conn.updateAnnotations(data.getId(), annots);
-		System.out.println("\tDeleting project...");
+		logger.debug("\tDeleting project...");
 		conn.deleteEntityById(project.getId());
 	}
 	
@@ -138,14 +148,12 @@ public class CrudMonitor implements Job {
 	 * @throws SynapseException
 	 */
 	public void query() throws SynapseException, JSONException {
-		System.out.println("Connecting to " + repoEndpoint + " with user " + userName);
-		conn.login(userName, password);
 		long startTime = System.nanoTime();
 		JSONObject result = conn.query("select id from entity where parentId == 'syn301181' limit 100 offset 1");
 		long endTime = System.nanoTime();
 		int rowCount = result.getInt("totalNumberOfResults");
 		long queryTime = (endTime - startTime) / 1000000;
-		System.out.println("Query execution time: " + queryTime);
+		logger.info("CrudMonitor.query: " + queryTime);
 	}
 	
 	/**
@@ -154,35 +162,46 @@ public class CrudMonitor implements Job {
 	 * @throws java.io.IOException.HttpClientHelperException
 	 */
 	public void uploadDownloadS3Data() throws SynapseException, IOException, HttpClientHelperException {
-		File dataSourceFile = File.createTempFile("integrationTest", ".txt");
+		long startTime, endTime, uploadTime, downloadTime;
+		File dataSourceFile = File.createTempFile("crudMonitor", ".txt");
 		dataSourceFile.deleteOnExit();
 		FileWriter writer = new FileWriter(dataSourceFile);
 		writer.write("Hello world!");
 		writer.close();
 
 		Project project = new Project();
-		project.setName("crudMonitorProject");
+//		project.setName("crudMonitorProject");
 		project = conn.createEntity(project);
-		System.out.println("\tAdding folder...");
+		logger.debug("\tAdding folder...");
 		Folder folder = new Folder();
-		folder.setName("crudMonitorFolder");
+//		folder.setName("crudMonitorFolder");
 		folder.setParentId(project.getId());
 		folder = conn.createEntity(folder);
-		System.out.println("\tAdding data...");
+		logger.debug("\tAdding data...");
 		Data data = new Data();
-		data.setName("crudMonitorData");
+//		data.setName("crudMonitorData");
 		data.setParentId(folder.getId());
 		data.setType(LayerTypeNames.E);
 		data = conn.createEntity(data);
 
+		startTime = System.nanoTime();
 		data = (Data) conn.uploadLocationableToSynapse(data, dataSourceFile);
+		endTime = System.nanoTime();
+		uploadTime = endTime - startTime;
 		
 		List<LocationData> locations = data.getLocations();
 		LocationData location = locations.get(0);
 		
-		File dataDestinationFile = File.createTempFile("integrationTest", ".download");
+		File dataDestinationFile = File.createTempFile("crudMonitor", ".download");
 		dataDestinationFile.deleteOnExit();
+		startTime = System.nanoTime();
 		HttpClientHelper.getContent(DefaultHttpClientSingleton.getInstance(), location.getPath(), dataDestinationFile);
+		endTime = System.nanoTime();
+		downloadTime = endTime - startTime;
 		
+		logger.debug("\tDeleting project");
+		conn.deleteEntityById(project.getId());
+		
+		logger.info("CrudMonitor.uploadDownloadToS3: " + uploadTime/1000000 + "/" + downloadTime/1000000);
 	}
 }

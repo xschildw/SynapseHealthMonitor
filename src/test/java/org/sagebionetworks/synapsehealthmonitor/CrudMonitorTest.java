@@ -55,28 +55,25 @@ public class CrudMonitorTest {
 	}
 	
 	@Test
-	public void testGenerateCrud() throws SynapseException {
+	public void testGenerateCrud() throws SynapseException, JSONException {
 		Project p = new Project();
-		p.setName("crudMonitorProject");
 		Project expectedProj = new Project();
-		expectedProj.setName(p.getName());
 		expectedProj.setId("syn0");
+		expectedProj.setName(expectedProj.getName());
 		
 		Folder f = new Folder();
-		f.setName("crudMonitorFolder");
 		f.setParentId(expectedProj.getId());
 		Folder expectedFolder = new Folder();
-		expectedFolder.setName(f.getName());
-		expectedFolder.setParentId(f.getParentId());
 		expectedFolder.setId("syn1");
+		expectedFolder.setName(expectedFolder.getName());
+		expectedFolder.setParentId(f.getParentId());
 		
 		Data d = new Data();
-		d.setName("crudMonitorData");
 		d.setParentId(expectedFolder.getId());
 		Data expectedData = new Data();
-		expectedData.setName(d.getName());
-		expectedData.setParentId(d.getParentId());
 		expectedData.setId("syn3");
+		expectedData.setName(expectedData.getName());
+		expectedData.setParentId(d.getParentId());
 		
 		Annotations annots = new Annotations();
 		annots.addAnnotation("someAnnot", "someAnnotValue");
@@ -109,31 +106,28 @@ public class CrudMonitorTest {
 	@Test
 	public void testUploadDownloadS3Data() throws SynapseException {
 		Project p = new Project();
-		p.setName("crudMonitorProject");
 		Project expectedProj = new Project();
-		expectedProj.setName(p.getName());
 		expectedProj.setId("syn0");
+		expectedProj.setName(expectedProj.getId()); // Nameless entity gets id as name
 		
 		Folder f = new Folder();
-		f.setName("crudMonitorFolder");
 		f.setParentId(expectedProj.getId());
 		Folder expectedFolder = new Folder();
-		expectedFolder.setName(f.getName());
-		expectedFolder.setParentId(f.getParentId());
 		expectedFolder.setId("syn1");
+		expectedFolder.setName(expectedFolder.getId());
+		expectedFolder.setParentId(f.getParentId());
 		
 		Data d = new Data();
-		d.setName("crudMonitorData");
 		d.setType(LayerTypeNames.E);
 		d.setParentId(expectedFolder.getId());
 		Data expectedData = new Data();
-		expectedData.setName(d.getName());
+		expectedData.setId("syn3");
+		expectedData.setName(expectedData.getId());
 		expectedData.setType(d.getType());
 		expectedData.setParentId(d.getParentId());
-		expectedData.setId("syn3");
 		LocationData locData = new LocationData();
 		locData.setType(LocationTypeNames.awss3);
-		locData.setPath("somePathonS3");
+		locData.setPath("somePathOnS3");
 		List<LocationData> locations = new ArrayList<LocationData>();
 		locations.add(locData);
 		expectedData.setLocations(locations);
@@ -143,6 +137,6 @@ public class CrudMonitorTest {
 		when(mockConn.createEntity(d)).thenReturn(expectedData);
 		when(mockConn.uploadLocationableToSynapse(d, any(File.class))).thenReturn(d);
 		
-		
+		// TODO: Need to mock HttpClientHelper
 	}
 }
